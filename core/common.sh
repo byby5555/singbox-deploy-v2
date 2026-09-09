@@ -228,16 +228,16 @@ select_sni() {
         )
     fi
 
-    info "请选择 SNI / 伪装域名:"
+    info "请选择 SNI / 伪装域名:" >&2
     local i=1
     for opt in "${options[@]}"; do
         local domain="${opt%%|*}"
         local desc="${opt##*|}"
-        echo "  $i) $domain  ($desc)"
+        echo "  $i) $domain  ($desc)" >&2
         i=$((i+1))
     done
-    echo "  $i) 自定义输入"
-    echo -n "请输入选择(默认 1): "
+    echo "  $i) 自定义输入" >&2
+    echo -n "请输入选择(默认 1): " >&2
 
     read -r choice
     local max=${#options[@]}
@@ -246,7 +246,7 @@ select_sni() {
     if [ -z "$choice" ] || [ "$choice" = "1" ]; then
         echo "$default_sni"
     elif [ "$choice" = "$custom_idx" ]; then
-        echo -n "请输入自定义域名: "
+        echo -n "请输入自定义域名: " >&2
         read -r custom
         custom="$(echo "$custom" | tr -d '[:space:]')"
         if [ -n "$custom" ]; then
@@ -258,7 +258,7 @@ select_sni() {
         local selected="${options[$((choice-1))]}"
         echo "${selected%%|*}"
     else
-        warn "无效选择，使用默认: $default_sni"
+        warn "无效选择，使用默认: $default_sni" >&2
         echo "$default_sni"
     fi
 }
