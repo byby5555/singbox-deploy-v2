@@ -6,7 +6,7 @@
 
 # TUIC 入站 JSON
 tuic_inbound_json() {
-    local port="$1" uuid="$2" psk="$3" tag="$4"
+    local port="$1" uuid="$2" psk="$3" tag="$4" sni="$5"
     cat <<JSON
 {
   "type": "tuic",
@@ -19,7 +19,8 @@ tuic_inbound_json() {
   "tls": {
     "enabled": true,
     "certificate": "self",
-    "insecure": true
+    "insecure": true,
+    "server_name": "$sni"
   },
   "tag": "$tag"
 }
@@ -32,9 +33,10 @@ tuic_build_inbound() {
         [ -z "$TUIC_PORT" ] && TUIC_PORT=$(rand_port)
         [ -z "$TUIC_UUID" ] && TUIC_UUID=$(gen_uuid)
         [ -z "$TUIC_PSK" ] && TUIC_PSK=$(rand_pass)
+        [ -z "$TUIC_SNI" ] && TUIC_SNI="www.bing.com"
         TUIC_TAG="tuic-in"
-        export TUIC_PORT TUIC_UUID TUIC_PSK TUIC_TAG
-        build_config_append_inbound "$(tuic_inbound_json "$TUIC_PORT" "$TUIC_UUID" "$TUIC_PSK" "$TUIC_TAG")"
+        export TUIC_PORT TUIC_UUID TUIC_PSK TUIC_SNI TUIC_TAG
+        build_config_append_inbound "$(tuic_inbound_json "$TUIC_PORT" "$TUIC_UUID" "$TUIC_PSK" "$TUIC_TAG" "$TUIC_SNI")"
     fi
 }
 
@@ -68,11 +70,15 @@ add_tuic_node() {
     read -p "密码(留空自动生成): " tuic_psk
     [ -z "$tuic_psk" ] && tuic_psk=$(rand_pass)
 
+    local tuic_sni
+    tuic_sni=$(select_sni "hy2_tuic")
+
     local tag="tuic-${tuic_name:-$(rand_port)}"
-    jq --argjson port "$tuic_port" --arg uuid "$tuic_uuid" --arg psk "$tuic_psk" --arg tag "$tag" \
-       '.inbounds += [{"type":"tuic","listen":"::","listen_port":$port,"users":[{"uuid":$uuid,"password":$psk}],"congestion_control":"bbr","tls":{"enabled":true,"certificate":"self","insecure":true},"tag":$tag}]' \
+    jq --argjson port "$tuic_port" --arg uuid "$tuic_uuid" --arg psk "$tuic_psk" --arg sni "$tuic_sni" --arg tag "$tag" \
+       '.inbounds += [{"type":"tuic","listen":"::","listen_port":$port,"users":[{"uuid":$uuid,"password":$psk}],"congestion_control":"bbr","tls":{"enabled":true,"certificate":"self","insecure":true,"server_name":$sni},"tag":$tag}]' \
        "$SB_CONFIG_FILE" > "$SB_CONFIG_FILE.tmp" && mv "$SB_CONFIG_FILE.tmp" "$SB_CONFIG_FILE"
 
+    TUIC_SNI="$tuic_sni"
     ENABLE_TUIC=true
     save_protocols
     write_cache
@@ -86,7 +92,8 @@ gen_tuic_uri() {
     local ip="${PUBLIC_IP:-$(get_public_ip)}"
     [ -z "$ip" ] && ip="YOUR_SERVER_IP"
     [ -n "${TUIC_PORT:-}" ] || load_from_config
+    local sni="${TUIC_SNI:-www.bing.com}"
     local encoded
     encoded=$(url_encode "$TUIC_PSK")
-    echo "TUIC:        tuic://${TUIC_UUID}:${encoded}@${ip}:${TUIC_PORT}/?congestion_control=bbr&alpn=h3&sni=www.bing.com&insecure=1#TUIC"
+    echo "TUIC:        tuic://${TUIC_UUID}:${encoded}@${ip}:${TUIC_PORT}/?congestion_control=bbr&alpn=h3&sni=${sni}&insecure=1#TUIC"
 }

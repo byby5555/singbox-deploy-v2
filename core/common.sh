@@ -107,9 +107,11 @@ write_cache() {
         echo "SS_METHOD=${SS_METHOD:-2022-blake3-aes-128-gcm}"
         echo "HY2_PORT=${HY2_PORT:-}"
         echo "HY2_PSK=${HY2_PSK:-}"
+        echo "HY2_SNI=${HY2_SNI:-www.bing.com}"
         echo "TUIC_PORT=${TUIC_PORT:-}"
         echo "TUIC_UUID=${TUIC_UUID:-}"
         echo "TUIC_PSK=${TUIC_PSK:-}"
+        echo "TUIC_SNI=${TUIC_SNI:-www.bing.com}"
         echo "REALITY_PORT=${REALITY_PORT:-}"
         echo "REALITY_UUID=${REALITY_UUID:-}"
         echo "REALITY_PK=${REALITY_PK:-}"
@@ -157,17 +159,85 @@ load_from_config() {
     SS_METHOD=$(jq -r '.inbounds[] | select(.type=="shadowsocks") | .method // empty' "$SB_CONFIG_FILE" | head -n1)
     HY2_PORT=$(jq -r '.inbounds[] | select(.type=="hysteria2") | .listen_port // empty' "$SB_CONFIG_FILE" | head -n1)
     HY2_PSK=$(jq -r '.inbounds[] | select(.type=="hysteria2") | .users[0].password // empty' "$SB_CONFIG_FILE" | head -n1)
+    HY2_SNI=$(jq -r '.inbounds[] | select(.type=="hysteria2") | .tls.server_name // empty' "$SB_CONFIG_FILE" | head -n1)
     TUIC_PORT=$(jq -r '.inbounds[] | select(.type=="tuic") | .listen_port // empty' "$SB_CONFIG_FILE" | head -n1)
     TUIC_UUID=$(jq -r '.inbounds[] | select(.type=="tuic") | .users[0].uuid // empty' "$SB_CONFIG_FILE" | head -n1)
     TUIC_PSK=$(jq -r '.inbounds[] | select(.type=="tuic") | .users[0].password // empty' "$SB_CONFIG_FILE" | head -n1)
+    TUIC_SNI=$(jq -r '.inbounds[] | select(.type=="tuic") | .tls.server_name // empty' "$SB_CONFIG_FILE" | head -n1)
     REALITY_PORT=$(jq -r '.inbounds[] | select(.type=="vless") | .listen_port // empty' "$SB_CONFIG_FILE" | head -n1)
     REALITY_UUID=$(jq -r '.inbounds[] | select(.type=="vless") | .users[0].uuid // empty' "$SB_CONFIG_FILE" | head -n1)
     REALITY_PK=$(jq -r '.inbounds[] | select(.type=="vless") | .tls.reality.private_key // empty' "$SB_CONFIG_FILE" | head -n1)
     REALITY_SID=$(jq -r '.inbounds[] | select(.type=="vless") | .tls.reality.short_id[0] // empty' "$SB_CONFIG_FILE" | head -n1)
+    REALITY_SNI=$(jq -r '.inbounds[] | select(.type=="vless") | .tls.server_name // empty' "$SB_CONFIG_FILE" | head -n1)
     VMESS_PORT=$(jq -r '.inbounds[] | select(.type=="vmess") | .listen_port // empty' "$SB_CONFIG_FILE" | head -n1)
     VMESS_UUID=$(jq -r '.inbounds[] | select(.type=="vmess") | .users[0].uuid // empty' "$SB_CONFIG_FILE" | head -n1)
-    export SS_PORT SS_PSK SS_METHOD HY2_PORT HY2_PSK TUIC_PORT TUIC_UUID TUIC_PSK
-    export REALITY_PORT REALITY_UUID REALITY_PK REALITY_SID VMESS_PORT VMESS_UUID
+    export SS_PORT SS_PSK SS_METHOD HY2_PORT HY2_PSK HY2_SNI TUIC_PORT TUIC_UUID TUIC_PSK TUIC_SNI
+    export REALITY_PORT REALITY_UUID REALITY_PK REALITY_SID REALITY_SNI VMESS_PORT VMESS_UUID
+}
+
+# ---------- SNI / 伪装域名选择 ----------
+# 用法: select_sni "reality" 或 select_sni "hy2_tuic"
+# 返回: 通过 echo 输出选定的 SNI（调用方用 $(select_sni ...) 捕获）
+select_sni() {
+    local mode="$1"
+    local default_sni
+    local options=()
+
+    if [ "$mode" = "reality" ]; then
+        # Reality 需要真实服务器 IP（非 CDN），支持 TLS 1.3 + H2
+        default_sni="addons.mozilla.org"
+        options=(
+            "addons.mozilla.org|Mozilla 插件站(默认)"
+            "www.swift.com|SWIFT 金融官网(低调)"
+            "www.tesla.com|特斯拉官网"
+            "www.lovelive-anime.jp|动漫官网(小众)"
+            "dash.cloudflare.com|Cloudflare 面板"
+        )
+    else
+        # HY2 / TUIC 仅客户端伪装，要求低
+        default_sni="www.bing.com"
+        options=(
+            "www.bing.com|微软 Bing(默认)"
+            "www.apple.com|苹果官网"
+            "www.cloudflare.com|Cloudflare"
+            "www.swift.com|SWIFT 金融(低调)"
+            "www.tesla.com|特斯拉官网"
+        )
+    fi
+
+    info "请选择 SNI / 伪装域名:"
+    local i=1
+    for opt in "${options[@]}"; do
+        local domain="${opt%%|*}"
+        local desc="${opt##*|}"
+        echo "  $i) $domain  ($desc)"
+        i=$((i+1))
+    done
+    echo "  $i) 自定义输入"
+    echo -n "请输入选择(默认 1): "
+
+    read -r choice
+    local max=${#options[@]}
+    local custom_idx=$((max+1))
+
+    if [ -z "$choice" ] || [ "$choice" = "1" ]; then
+        echo "$default_sni"
+    elif [ "$choice" = "$custom_idx" ]; then
+        echo -n "请输入自定义域名: "
+        read -r custom
+        custom="$(echo "$custom" | tr -d '[:space:]')"
+        if [ -n "$custom" ]; then
+            echo "$custom"
+        else
+            echo "$default_sni"
+        fi
+    elif [ "$choice" -ge 2 ] && [ "$choice" -le "$max" ] 2>/dev/null; then
+        local selected="${options[$((choice-1))]}"
+        echo "${selected%%|*}"
+    else
+        warn "无效选择，使用默认: $default_sni"
+        echo "$default_sni"
+    fi
 }
 
 # ---------- 生成 URI 汇总（各协议模块提供 gen_uri_$proto）----------

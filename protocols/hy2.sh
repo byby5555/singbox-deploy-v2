@@ -6,7 +6,7 @@
 
 # HY2 入站 JSON
 hy2_inbound_json() {
-    local port="$1" psk="$2" tag="$3"
+    local port="$1" psk="$2" tag="$3" sni="$4"
     cat <<JSON
 {
   "type": "hysteria2",
@@ -16,7 +16,8 @@ hy2_inbound_json() {
   "tls": {
     "enabled": true,
     "alpn": ["h3"],
-    "insecure": true
+    "insecure": true,
+    "server_name": "$sni"
   },
   "tag": "$tag"
 }
@@ -28,9 +29,10 @@ hy2_build_inbound() {
     if [ "${ENABLE_HY2:-false}" = "true" ]; then
         [ -z "$HY2_PORT" ] && HY2_PORT=$(rand_port)
         [ -z "$HY2_PSK" ] && HY2_PSK=$(rand_pass)
+        [ -z "$HY2_SNI" ] && HY2_SNI="www.bing.com"
         HY2_TAG="hy2-in"
-        export HY2_PORT HY2_PSK HY2_TAG
-        build_config_append_inbound "$(hy2_inbound_json "$HY2_PORT" "$HY2_PSK" "$HY2_TAG")"
+        export HY2_PORT HY2_PSK HY2_SNI HY2_TAG
+        build_config_append_inbound "$(hy2_inbound_json "$HY2_PORT" "$HY2_PSK" "$HY2_TAG" "$HY2_SNI")"
     fi
 }
 
@@ -62,11 +64,15 @@ add_hy2_node() {
     read -p "密码(留空自动生成): " hy2_psk
     [ -z "$hy2_psk" ] && hy2_psk=$(rand_pass)
 
+    local hy2_sni
+    hy2_sni=$(select_sni "hy2_tuic")
+
     local tag="hy2-${hy2_name:-$(rand_port)}"
-    jq --argjson port "$hy2_port" --arg psk "$hy2_psk" --arg tag "$tag" \
-       '.inbounds += [{"type":"hysteria2","listen":"::","listen_port":$port,"users":[{"password":$psk}],"tls":{"enabled":true,"alpn":["h3"],"insecure":true},"tag":$tag}]' \
+    jq --argjson port "$hy2_port" --arg psk "$hy2_psk" --arg sni "$hy2_sni" --arg tag "$tag" \
+       '.inbounds += [{"type":"hysteria2","listen":"::","listen_port":$port,"users":[{"password":$psk}],"tls":{"enabled":true,"alpn":["h3"],"insecure":true,"server_name":$sni},"tag":$tag}]' \
        "$SB_CONFIG_FILE" > "$SB_CONFIG_FILE.tmp" && mv "$SB_CONFIG_FILE.tmp" "$SB_CONFIG_FILE"
 
+    HY2_SNI="$hy2_sni"
     ENABLE_HY2=true
     save_protocols
     write_cache
@@ -80,7 +86,8 @@ gen_hy2_uri() {
     local ip="${PUBLIC_IP:-$(get_public_ip)}"
     [ -z "$ip" ] && ip="YOUR_SERVER_IP"
     [ -n "${HY2_PORT:-}" ] || load_from_config
+    local sni="${HY2_SNI:-www.bing.com}"
     local encoded
     encoded=$(url_encode "$HY2_PSK")
-    echo "Hysteria2:   hy2://${encoded}@${ip}:${HY2_PORT}/?insecure=1&sni=www.bing.com&alpn=h3#HY2"
+    echo "Hysteria2:   hy2://${encoded}@${ip}:${HY2_PORT}/?insecure=1&sni=${sni}&alpn=h3#HY2"
 }

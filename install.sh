@@ -91,13 +91,23 @@ echo ""
 echo "请输入节点连接 IP 或 DDNS域名(留空默认出口IP):"
 read -r CUSTOM_IP
 CUSTOM_IP="$(echo "$CUSTOM_IP" | tr -d '[:space:]')"
+
 if $ENABLE_REALITY; then
-    echo "请输入 Reality 的 SNI(留空默认 addons.mozilla.org):"
-    read -r REALITY_SNI
-    REALITY_SNI="$(echo "${REALITY_SNI:-addons.mozilla.org}" | tr -d '[:space:]')"
+    REALITY_SNI=$(select_sni "reality")
 else
     REALITY_SNI="addons.mozilla.org"
 fi
+
+if $ENABLE_HY2; then
+    info "Hysteria2 SNI 选择:"
+    HY2_SNI=$(select_sni "hy2_tuic")
+fi
+
+if $ENABLE_TUIC; then
+    info "TUIC SNI 选择:"
+    TUIC_SNI=$(select_sni "hy2_tuic")
+fi
+
 write_cache
 
 # ---------- 安装依赖与 sing-box ----------

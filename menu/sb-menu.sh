@@ -22,14 +22,30 @@ read_cache
 load_from_config
 
 show_menu() {
-    cat <<'MENU'
+    # 运行状态检测
+    local status_pid status_ver status_text status_color
+    local running
+    running=$(check_running)
+    status_pid=$(get_pid)
+    status_ver=$(get_version)
+    if [ "$running" = "running" ]; then
+        status_color='\033[1;32m'
+        status_text="● 运行中"
+    else
+        status_color='\033[1;31m'
+        status_text="○ 未运行"
+    fi
 
-==========================
- Sing-box 管理面板 (sb)
-==========================
-1) 查看协议链接
-2) 查看配置文件
-3) 编辑配置文件
+    echo ""
+    echo "=========================="
+    echo " Sing-box 管理面板 (sb)"
+    echo "=========================="
+    echo -e " 状态: ${status_color}${status_text}${C_END} | PID: ${status_pid} | ${status_ver}"
+    echo " --------------------------"
+    cat <<'MENU'
+ 1) 查看协议链接
+ 2) 查看配置文件
+ 3) 编辑配置文件
 MENU
     local option=4
     [ "${ENABLE_SS:-false}" = "true" ] && { echo "$option) 重置 SS 端口"; MENU_MAP[$option]="reset_ss"; option=$((option+1)); }

@@ -98,6 +98,25 @@ service_status() {
     fi
 }
 
+# 快速检测运行状态（供菜单头部显示，返回: "running" 或 "stopped"）
+check_running() {
+    if pgrep -x sing-box >/dev/null 2>&1; then
+        echo "running"
+    else
+        echo "stopped"
+    fi
+}
+
+# 获取 sing-box 版本（简短）
+get_version() {
+    sing-box version 2>/dev/null | head -n1 || echo "unknown"
+}
+
+# 获取 PID
+get_pid() {
+    pgrep -x sing-box 2>/dev/null | head -n1 || echo "-"
+}
+
 # 检查配置合法性（sing-box check）
 check_config() {
     if [ -f "$SB_CONFIG_FILE" ]; then
