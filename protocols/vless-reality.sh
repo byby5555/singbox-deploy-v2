@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# ============================================================
+# singbox-deploy-v2 / protocols/vless-reality.sh
+# VLESS + Reality 协议模块
+# ============================================================
+
+# VLESS Reality 入站 JSON
+reality_inbound_json() {
+    local port="$1" uuid="$2" pk="$3" sid="$4" sni="$5" tag="$6"
+    cat <<JSON
+{
+  "type": "vless",
+  "listen": "::",
+  "listen_port": $port,
+  "users": [
+    {"uuid": "$uuid", "flow": "xtls-rprx-vision"}
+  ],
+  "tls": {
+    "enabled": true,
+    "server_name": "$sni",
+    "reality": {
+      "enabled": true,
+      "handshake": {"server": "$sni", "server_port": 443},
+      "private_key": "$pk",
+      "short_id": ["$sid"]
+    }
+  },
+  "tag": "$tag"
+}
+JSON
+}
+
+# 生成 VLESS Reality 入站配置段
+reality_build_inbound() {
+    if [ "${ENABLE_REALITY:-false}" = "true" ]; then
+        [ -z "$REALITY_PORT" ] && REALITY_PORT=$(rand_port)
+        [ -z "$REALITY_UUID" ] && REALITY_UUID=$(gen_uuid)
+        [ -z "$REALITY_PK" ] || [ -z "$REALITY_PUB" ] && generate_reality_keys
+        [ -z "$REALITY_SID" ] && REALITY_SID=$(openssl rand -hex 4 2>/dev/null || echo "123456")
+        [ -z "$REALITY_SNI" ] && REALITY_SNI="addons.mozilla.org"
+        REALITY_TAG="vless-reality-in"
+        export REALITY_PORT REALITY_UUID REALITY_PK REALITY_PUB REALITY_SID REALITY_SNI REALITY_TAG
+        build_config_append_inbound "$(reality_inbound_json "$REALITY_PORT" "$REALITY_UUID" "$REALITY_PK" "$REALITY_SID" "$REALITY_SNI" "$REALITY_TAG")"
+    fi
+}
+
+# 重置 Reality 端口
+reset_reality_port() {
+    local new_port
+    read -p "请输入新的 Reality 端口(留空随机): " new_port
+    [ -z "$new_port" ] && new_port=$(rand_port)
+    if [ -f "$SB_CONFIG_FILE" ]; then
+        jq --argjson port "$new_port" \
+           '.inbounds |= map(if .type=="vless" then .listen_port = $port else . end)' \
+           "$SB_CONFIG_FILE" > "$SB_CONFIG_FILE.tmp" && mv "$SB_CONFIG_FILE.tmp" "$SB_CONFIG_FILE"
+        REALITY_PORT="$new_port"
+        write_cache
+        info "Reality 端口已更新: $new_port"
+        service_restart && generate_uris
+    else
+        err "配置文件不存在"
+        return 1
+    fi
+}
+
+# VLESS Reality URI 生成
+gen_reality_uri() {
+    local ip="${PUBLIC_IP:-$(get_public_ip)}"
+    [ -z "$ip" ] && ip="YOUR_SERVER_IP"
+    [ -n "${REALITY_PORT:-}" ] || load_from_config
+    local sid="${REALITY_SID:-}"
+    echo "VLESS Reality:  vless://${REALITY_UUID}@${ip}:${REALITY_PORT}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${REALITY_SNI}&fp=chrome&pbk=${REALITY_PUB}&sid=${sid}#Reality"
+}
