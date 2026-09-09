@@ -18,8 +18,8 @@ anytls_inbound_json() {
   ],
   "tls": {
     "enabled": true,
-    "certificate": "self",
-    "insecure": true,
+    "certificate_path": "$SB_CERT_FILE",
+    "key_path": "$SB_KEY_FILE",
     "server_name": "$sni"
   },
   "tag": "$tag"
@@ -71,8 +71,8 @@ add_anytls_node() {
     anytls_sni=$(select_sni "hy2_tuic")
 
     local tag="anytls-${anytls_name:-$(rand_port)}"
-    jq --argjson port "$anytls_port" --arg password "$anytls_password" --arg sni "$anytls_sni" --arg tag "$tag" \
-       '.inbounds += [{"type":"anytls","listen":"::","listen_port":$port,"users":[{"name":"user1","password":$password}],"tls":{"enabled":true,"certificate":"self","insecure":true,"server_name":$sni},"tag":$tag}]' \
+    jq --argjson port "$anytls_port" --arg password "$anytls_password" --arg sni "$anytls_sni" --arg tag "$tag" --arg cert "$SB_CERT_FILE" --arg key "$SB_KEY_FILE" \
+       '.inbounds += [{"type":"anytls","listen":"::","listen_port":$port,"users":[{"name":"user1","password":$password}],"tls":{"enabled":true,"certificate_path":$cert,"key_path":$key,"server_name":$sni},"tag":$tag}]' \
        "$SB_CONFIG_FILE" > "$SB_CONFIG_FILE.tmp" && mv "$SB_CONFIG_FILE.tmp" "$SB_CONFIG_FILE"
 
     ANYTLS_SNI="$anytls_sni"

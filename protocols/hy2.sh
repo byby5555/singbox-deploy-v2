@@ -16,7 +16,8 @@ hy2_inbound_json() {
   "tls": {
     "enabled": true,
     "alpn": ["h3"],
-    "insecure": true,
+    "certificate_path": "$SB_CERT_FILE",
+    "key_path": "$SB_KEY_FILE",
     "server_name": "$sni"
   },
   "tag": "$tag"
@@ -68,8 +69,8 @@ add_hy2_node() {
     hy2_sni=$(select_sni "hy2_tuic")
 
     local tag="hy2-${hy2_name:-$(rand_port)}"
-    jq --argjson port "$hy2_port" --arg psk "$hy2_psk" --arg sni "$hy2_sni" --arg tag "$tag" \
-       '.inbounds += [{"type":"hysteria2","listen":"::","listen_port":$port,"users":[{"password":$psk}],"tls":{"enabled":true,"alpn":["h3"],"insecure":true,"server_name":$sni},"tag":$tag}]' \
+    jq --argjson port "$hy2_port" --arg psk "$hy2_psk" --arg sni "$hy2_sni" --arg tag "$tag" --arg cert "$SB_CERT_FILE" --arg key "$SB_KEY_FILE" \
+       '.inbounds += [{"type":"hysteria2","listen":"::","listen_port":$port,"users":[{"password":$psk}],"tls":{"enabled":true,"alpn":["h3"],"certificate_path":$cert,"key_path":$key,"server_name":$sni},"tag":$tag}]' \
        "$SB_CONFIG_FILE" > "$SB_CONFIG_FILE.tmp" && mv "$SB_CONFIG_FILE.tmp" "$SB_CONFIG_FILE"
 
     HY2_SNI="$hy2_sni"

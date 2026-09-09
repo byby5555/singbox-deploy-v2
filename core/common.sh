@@ -11,6 +11,8 @@ SB_CONFIG_FILE="$SB_CONFIG_DIR/config.json"
 SB_CACHE_FILE="$SB_CONFIG_DIR/.config_cache"
 SB_PROTOCOL_FILE="$SB_CONFIG_DIR/.protocols"
 SB_NAMES_FILE="/root/node_names.txt"
+SB_CERT_FILE="$SB_CONFIG_DIR/cert.pem"
+SB_KEY_FILE="$SB_CONFIG_DIR/key.pem"
 
 # ---------- 颜色 ----------
 C_INFO='\033[1;34m'
@@ -152,6 +154,23 @@ EOF
 
 load_protocols() {
     [ -f "$SB_PROTOCOL_FILE" ] && . "$SB_PROTOCOL_FILE" 2>/dev/null || true
+}
+
+# ---------- 生成自签名证书 ----------
+generate_self_signed_cert() {
+    mkdir -p "$SB_CONFIG_DIR"
+    if [ -f "$SB_CERT_FILE" ] && [ -f "$SB_KEY_FILE" ]; then
+        info "自签名证书已存在，跳过生成"
+        return 0
+    fi
+    info "生成自签名证书..."
+    # 优先使用 EC prime256v1（体积小、性能好），回退 RSA 2048
+    openssl ecparam -genkey -name prime256v1 -out "$SB_KEY_FILE" 2>/dev/null || \
+        openssl genrsa -out "$SB_KEY_FILE" 2048 2>/dev/null
+    openssl req -new -x509 -days 3650 -key "$SB_KEY_FILE" -out "$SB_CERT_FILE" \
+        -subj "/CN=www.bing.com" 2>/dev/null
+    chmod 600 "$SB_KEY_FILE"
+    ok "自签名证书已生成: $SB_CERT_FILE"
 }
 
 # ---------- 生成 Reality 密钥对 ----------

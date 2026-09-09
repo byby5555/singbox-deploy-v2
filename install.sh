@@ -141,6 +141,12 @@ fi
 # ---------- 构建配置 ----------
 backup_config
 info "正在生成配置..."
+
+# 需要使用自签名证书的协议：HY2 / TUIC / Trojan / AnyTLS
+if $ENABLE_HY2 || $ENABLE_TUIC || $ENABLE_TROJAN || $ENABLE_ANYTLS; then
+    generate_self_signed_cert
+fi
+
 $ENABLE_SS && ss_build_inbound
 $ENABLE_HY2 && hy2_build_inbound
 $ENABLE_TUIC && tuic_build_inbound
