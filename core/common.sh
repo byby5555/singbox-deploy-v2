@@ -26,7 +26,10 @@ err()  { echo -e "${C_ERR}[ERR]${C_END} $*" >&2; }
 
 # ---------- 权限检查 ----------
 require_root() {
-    [ "$(id -u)" != "0" ] && err "必须以 root 运行" && exit 1
+    if [ "$(id -u)" != "0" ]; then
+        err "必须以 root 运行"
+        exit 1
+    fi
 }
 
 # ---------- OS 检测 ----------
@@ -83,7 +86,10 @@ check_deps() {
             missing=1
         fi
     done
-    [ $missing -eq 1 ] && err "请先安装缺失依赖 (curl jq openssl)" && exit 1
+    if [ "$missing" -eq 1 ]; then
+        err "请先安装缺失依赖 (curl jq openssl)"
+        exit 1
+    fi
     return 0
 }
 
