@@ -34,12 +34,13 @@ EOF
 
     # 配置校验
     if command -v sing-box >/dev/null 2>&1; then
-        if sing-box check -c "$SB_CONFIG_FILE" >/dev/null 2>&1; then
-            ok "配置校验通过"
-        else
-            err "配置校验失败，请检查: sing-box check -c $SB_CONFIG_FILE"
+        if ! sing-box check -c "$SB_CONFIG_FILE" >/dev/null 2>&1; then
+            err "配置校验失败，详细错误："
+            sing-box check -c "$SB_CONFIG_FILE" 2>&1 | head -n 20
+            err "请检查: $SB_CONFIG_FILE"
             return 1
         fi
+        ok "配置校验通过"
     fi
     return 0
 }

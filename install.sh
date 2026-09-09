@@ -46,14 +46,6 @@ check_deps
 info "========== Sing-box 模块化部署 v2 =========="
 info "检测到系统: $OS"
 
-# ---------- 节点名称 ----------
-echo ""
-echo "请输入节点名称(留空则默认):"
-read -r user_name
-if [ -n "$user_name" ]; then
-    echo "-${user_name}" > "$SB_NAMES_FILE"
-fi
-
 # ---------- 协议选择 ----------
 info "=== 选择要部署的协议 ==="
 echo "1) Shadowsocks (SS)"
@@ -64,10 +56,17 @@ echo "5) VMess (TCP)"
 echo "6) Trojan"
 echo "7) AnyTLS (需 sing-box 1.12+)"
 echo ""
-echo -n "请输入协议编号(多个用空格分隔, 如: 1 2 4): "
+echo -n "请输入协议编号(多个用空格分隔, 如: 1 2 4; 直接回车默认全部部署): "
 read -r protocol_input
 
 ENABLE_SS=false; ENABLE_HY2=false; ENABLE_TUIC=false; ENABLE_REALITY=false; ENABLE_VMESS=false; ENABLE_TROJAN=false; ENABLE_ANYTLS=false
+
+# 直接回车 → 默认部署全部 7 种协议
+if [ -z "$protocol_input" ]; then
+    protocol_input="1 2 3 4 5 6 7"
+    info "未输入，默认部署全部协议"
+fi
+
 for num in $protocol_input; do
     case "$num" in
         1) ENABLE_SS=true ;;

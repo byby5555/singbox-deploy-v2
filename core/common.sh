@@ -10,7 +10,6 @@ SB_CONFIG_DIR="/etc/sing-box"
 SB_CONFIG_FILE="$SB_CONFIG_DIR/config.json"
 SB_CACHE_FILE="$SB_CONFIG_DIR/.config_cache"
 SB_PROTOCOL_FILE="$SB_CONFIG_DIR/.protocols"
-SB_NAMES_FILE="/root/node_names.txt"
 SB_CERT_FILE="$SB_CONFIG_DIR/cert.pem"
 SB_KEY_FILE="$SB_CONFIG_DIR/key.pem"
 
