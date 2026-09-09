@@ -46,56 +46,11 @@ check_deps
 info "========== Sing-box 模块化部署 v2 =========="
 info "检测到系统: $OS"
 
-# ---------- 协议选择 ----------
-info "=== 选择要部署的协议 ==="
-echo "1) Shadowsocks (SS)"
-echo "2) Hysteria2 (HY2)"
-echo "3) TUIC"
-echo "4) VLESS Reality"
-echo "5) VMess (TCP)"
-echo "6) Trojan"
-echo "7) AnyTLS (需 sing-box 1.12+)"
-echo ""
-echo -n "请输入协议编号(多个用空格分隔, 如: 1 2 4; 直接回车默认全部部署): "
-read -r protocol_input
-
-ENABLE_SS=false; ENABLE_HY2=false; ENABLE_TUIC=false; ENABLE_REALITY=false; ENABLE_VMESS=false; ENABLE_TROJAN=false; ENABLE_ANYTLS=false
-
-# 直接回车 → 默认部署全部 7 种协议
-if [ -z "$protocol_input" ]; then
-    protocol_input="1 2 3 4 5 6 7"
-    info "未输入，默认部署全部协议"
-fi
-
-for num in $protocol_input; do
-    case "$num" in
-        1) ENABLE_SS=true ;;
-        2) ENABLE_HY2=true ;;
-        3) ENABLE_TUIC=true ;;
-        4) ENABLE_REALITY=true ;;
-        5) ENABLE_VMESS=true ;;
-        6) ENABLE_TROJAN=true ;;
-        7) ENABLE_ANYTLS=true ;;
-        *) warn "无效选项: $num" ;;
-    esac
-done
-if ! $ENABLE_SS && ! $ENABLE_HY2 && ! $ENABLE_TUIC && ! $ENABLE_REALITY && ! $ENABLE_VMESS && ! $ENABLE_TROJAN && ! $ENABLE_ANYTLS; then
-    err "未选择任何协议，退出"
-    exit 1
-fi
-info "已选择协议:"
-$ENABLE_SS && echo "  - Shadowsocks"
-$ENABLE_HY2 && echo "  - Hysteria2"
-$ENABLE_TUIC && echo "  - TUIC"
-$ENABLE_REALITY && echo "  - VLESS Reality"
-$ENABLE_VMESS && echo "  - VMess (TCP)"
-$ENABLE_TROJAN && echo "  - Trojan"
-$ENABLE_ANYTLS && echo "  - AnyTLS"
-
+# ---------- 默认部署 VLESS Reality ----------
+ENABLE_SS=false; ENABLE_HY2=false; ENABLE_TUIC=false; ENABLE_REALITY=true; ENABLE_VMESS=false; ENABLE_TROJAN=false; ENABLE_ANYTLS=false
+info "默认部署协议: VLESS Reality"
+info "（如需其他协议，安装完成后输入 sb → 新增节点）"
 save_protocols
-
-# ---------- SS 加密方式（如启用） ----------
-$ENABLE_SS && select_ss_method
 
 # ---------- 连接 IP / SNI ----------
 echo ""
@@ -103,31 +58,7 @@ echo "请输入节点连接 IP 或 DDNS域名(留空默认出口IP):"
 read -r CUSTOM_IP
 CUSTOM_IP="$(echo "$CUSTOM_IP" | tr -d '[:space:]')"
 
-if $ENABLE_REALITY; then
-    REALITY_SNI=$(select_sni "reality")
-else
-    REALITY_SNI="addons.mozilla.org"
-fi
-
-if $ENABLE_HY2; then
-    info "Hysteria2 SNI 选择:"
-    HY2_SNI=$(select_sni "hy2_tuic")
-fi
-
-if $ENABLE_TUIC; then
-    info "TUIC SNI 选择:"
-    TUIC_SNI=$(select_sni "hy2_tuic")
-fi
-
-if $ENABLE_TROJAN; then
-    info "Trojan SNI 选择:"
-    TROJAN_SNI=$(select_sni "hy2_tuic")
-fi
-
-if $ENABLE_ANYTLS; then
-    info "AnyTLS SNI 选择:"
-    ANYTLS_SNI=$(select_sni "hy2_tuic")
-fi
+REALITY_SNI=$(select_sni "reality")
 
 write_cache
 
