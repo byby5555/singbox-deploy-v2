@@ -51,9 +51,9 @@ rand_port() {
 
 rand_pass() {
     if command -v openssl >/dev/null 2>&1; then
-        openssl rand -base64 16 | tr -d '\n\r=+/'
+        openssl rand -base64 16 | tr -d '\n\r'
     else
-        head -c 16 /dev/urandom | base64 | tr -d '\n\r=+/'
+        head -c 16 /dev/urandom | base64 | tr -d '\n\r'
     fi
 }
 
