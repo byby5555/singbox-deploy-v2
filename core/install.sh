@@ -74,12 +74,22 @@ uninstall_singbox() {
             rm -f /etc/init.d/sing-box
             apk del sing-box 2>/dev/null || true
             ;;
-        *)
+        debian)
             systemctl disable --now sing-box 2>/dev/null || true
             systemctl kill sing-box 2>/dev/null || true
             rm -f /etc/systemd/system/sing-box.service
             systemctl daemon-reload 2>/dev/null || true
-            apt purge -y sing-box >/dev/null 2>&1 || true
+            apt-get purge -y sing-box >/dev/null 2>&1 || true
+            ;;
+        redhat)
+            systemctl disable --now sing-box 2>/dev/null || true
+            systemctl kill sing-box 2>/dev/null || true
+            rm -f /etc/systemd/system/sing-box.service
+            systemctl daemon-reload 2>/dev/null || true
+            yum remove -y sing-box >/dev/null 2>&1 || true
+            ;;
+        *)
+            err "不支持的系统: $OS" && return 1
             ;;
     esac
 
