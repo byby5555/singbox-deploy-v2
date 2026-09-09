@@ -42,8 +42,11 @@ MENU
     MENU_MAP[option]="restart";   echo "$option) 重启服务"; option=$((option+1))
     MENU_MAP[option]="status";    echo "$option) 查看状态"; option=$((option+1))
     MENU_MAP[option]="update";    echo "$option) 更新 sing-box"; option=$((option+1))
-    MENU_MAP[option]="add_ss";    echo "$option) 新增 SS 节点"; option=$((option+1))
-    MENU_MAP[option]="add_vmess"; echo "$option) 新增 VMess 节点"; option=$((option+1))
+    MENU_MAP[option]="add_ss";      echo "$option) 新增 SS 节点"; option=$((option+1))
+    MENU_MAP[option]="add_hy2";     echo "$option) 新增 Hysteria2 节点"; option=$((option+1))
+    MENU_MAP[option]="add_tuic";    echo "$option) 新增 TUIC 节点"; option=$((option+1))
+    MENU_MAP[option]="add_reality"; echo "$option) 新增 VLESS Reality 节点"; option=$((option+1))
+    MENU_MAP[option]="add_vmess";   echo "$option) 新增 VMess 节点"; option=$((option+1))
     MENU_MAP[option]="uninstall"; echo "$option) 卸载 sing-box"
     echo "0) 退出"
     echo "=========================="
@@ -72,6 +75,9 @@ while true; do
         status) service_status ;;
         update) update_singbox ;;
         add_ss) add_ss_node ;;
+        add_hy2) add_hy2_node ;;
+        add_tuic) add_tuic_node ;;
+        add_reality) add_reality_node ;;
         add_vmess) add_vmess_node ;;
         uninstall) uninstall_singbox; exit 0 ;;
         *) warn "无效选项: $opt" ;;

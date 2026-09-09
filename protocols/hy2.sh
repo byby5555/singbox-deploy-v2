@@ -53,6 +53,28 @@ reset_hy2_port() {
     fi
 }
 
+# 新增 HY2 节点
+add_hy2_node() {
+    info "=== 新增 Hysteria2 节点 ==="
+    read -p "节点名称(可留空): " hy2_name
+    read -p "端口(留空随机): " hy2_port
+    [ -z "$hy2_port" ] && hy2_port=$(rand_port)
+    read -p "密码(留空自动生成): " hy2_psk
+    [ -z "$hy2_psk" ] && hy2_psk=$(rand_pass)
+
+    local tag="hy2-${hy2_name:-$(rand_port)}"
+    jq --argjson port "$hy2_port" --arg psk "$hy2_psk" --arg tag "$tag" \
+       '.inbounds += [{"type":"hysteria2","listen":"::","listen_port":$port,"users":[{"password":$psk}],"tls":{"enabled":true,"alpn":["h3"],"insecure":true},"tag":$tag}]' \
+       "$SB_CONFIG_FILE" > "$SB_CONFIG_FILE.tmp" && mv "$SB_CONFIG_FILE.tmp" "$SB_CONFIG_FILE"
+
+    ENABLE_HY2=true
+    save_protocols
+    write_cache
+    service_restart
+    generate_uris
+    ok "HY2 节点已新增: $tag (端口 $hy2_port)"
+}
+
 # HY2 URI 生成
 gen_hy2_uri() {
     local ip="${PUBLIC_IP:-$(get_public_ip)}"

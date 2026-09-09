@@ -57,6 +57,30 @@ reset_tuic_port() {
     fi
 }
 
+# 新增 TUIC 节点
+add_tuic_node() {
+    info "=== 新增 TUIC 节点 ==="
+    read -p "节点名称(可留空): " tuic_name
+    read -p "端口(留空随机): " tuic_port
+    [ -z "$tuic_port" ] && tuic_port=$(rand_port)
+    read -p "UUID(留空自动生成): " tuic_uuid
+    [ -z "$tuic_uuid" ] && tuic_uuid=$(gen_uuid)
+    read -p "密码(留空自动生成): " tuic_psk
+    [ -z "$tuic_psk" ] && tuic_psk=$(rand_pass)
+
+    local tag="tuic-${tuic_name:-$(rand_port)}"
+    jq --argjson port "$tuic_port" --arg uuid "$tuic_uuid" --arg psk "$tuic_psk" --arg tag "$tag" \
+       '.inbounds += [{"type":"tuic","listen":"::","listen_port":$port,"users":[{"uuid":$uuid,"password":$psk}],"congestion_control":"bbr","tls":{"enabled":true,"certificate":"self","insecure":true},"tag":$tag}]' \
+       "$SB_CONFIG_FILE" > "$SB_CONFIG_FILE.tmp" && mv "$SB_CONFIG_FILE.tmp" "$SB_CONFIG_FILE"
+
+    ENABLE_TUIC=true
+    save_protocols
+    write_cache
+    service_restart
+    generate_uris
+    ok "TUIC 节点已新增: $tag (端口 $tuic_port)"
+}
+
 # TUIC URI 生成
 gen_tuic_uri() {
     local ip="${PUBLIC_IP:-$(get_public_ip)}"

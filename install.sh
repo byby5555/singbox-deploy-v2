@@ -149,4 +149,31 @@ SB_EOF
 
 install_sb_menu
 
-ok "安装完成！输入 sb 进入管理面板"
+ok "安装完成！"
+
+# ---------- 安装后：展示链接 → 询问是否新增更多节点 ----------
+while true; do
+    echo ""
+    read -p "是否立即新增更多节点？(y/N): " add_more
+    [[ ! "$add_more" =~ ^[Yy]$ ]] && break
+
+    info "请选择协议:"
+    echo "1) Shadowsocks (SS)"
+    echo "2) Hysteria2 (HY2)"
+    echo "3) TUIC"
+    echo "4) VLESS Reality"
+    echo "5) VMess (TCP)"
+    echo -n "请输入编号: "
+    read -r add_choice
+    case "$add_choice" in
+        1) add_ss_node ;;
+        2) add_hy2_node ;;
+        3) add_tuic_node ;;
+        4) add_reality_node ;;
+        5) add_vmess_node ;;
+        *) warn "无效选项: $add_choice" ;;
+    esac
+done
+
+echo ""
+ok "全部完成！输入 sb 进入管理面板"

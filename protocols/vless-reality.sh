@@ -63,6 +63,35 @@ reset_reality_port() {
     fi
 }
 
+# 新增 VLESS Reality 节点
+add_reality_node() {
+    info "=== 新增 VLESS Reality 节点 ==="
+    read -p "节点名称(可留空): " reality_name
+    read -p "端口(留空随机): " reality_port
+    [ -z "$reality_port" ] && reality_port=$(rand_port)
+    read -p "UUID(留空自动生成): " reality_uuid
+    [ -z "$reality_uuid" ] && reality_uuid=$(gen_uuid)
+    read -p "SNI(留空默认 addons.mozilla.org): " reality_sni
+    [ -z "$reality_sni" ] && reality_sni="addons.mozilla.org"
+
+    info "生成 Reality 密钥对..."
+    generate_reality_keys
+    local sid
+    sid=$(openssl rand -hex 4 2>/dev/null || echo "123456")
+
+    local tag="reality-${reality_name:-$(rand_port)}"
+    jq --argjson port "$reality_port" --arg uuid "$reality_uuid" --arg pk "$REALITY_PK" --arg sid "$sid" --arg sni "$reality_sni" --arg tag "$tag" \
+       '.inbounds += [{"type":"vless","listen":"::","listen_port":$port,"users":[{"uuid":$uuid,"flow":"xtls-rprx-vision"}],"tls":{"enabled":true,"server_name":$sni,"reality":{"enabled":true,"handshake":{"server":$sni,"server_port":443},"private_key":$pk,"short_id":[$sid]}},"tag":$tag}]' \
+       "$SB_CONFIG_FILE" > "$SB_CONFIG_FILE.tmp" && mv "$SB_CONFIG_FILE.tmp" "$SB_CONFIG_FILE"
+
+    ENABLE_REALITY=true
+    save_protocols
+    write_cache
+    service_restart
+    generate_uris
+    ok "Reality 节点已新增: $tag (端口 $reality_port)"
+}
+
 # VLESS Reality URI 生成
 gen_reality_uri() {
     local ip="${PUBLIC_IP:-$(get_public_ip)}"
