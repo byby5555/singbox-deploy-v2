@@ -101,8 +101,10 @@ write_cache() {
         echo "ENABLE_HY2=${ENABLE_HY2:-false}"
         echo "ENABLE_TUIC=${ENABLE_TUIC:-false}"
         echo "ENABLE_REALITY=${ENABLE_REALITY:-false}"
-        echo "ENABLE_VMESS=${ENABLE_VMESS:-false}"
-        echo "SS_PORT=${SS_PORT:-}"
+    echo "ENABLE_VMESS=${ENABLE_VMESS:-false}"
+    echo "ENABLE_TROJAN=${ENABLE_TROJAN:-false}"
+    echo "ENABLE_ANYTLS=${ENABLE_ANYTLS:-false}"
+    echo "SS_PORT=${SS_PORT:-}"
         echo "SS_PSK=${SS_PSK:-}"
         echo "SS_METHOD=${SS_METHOD:-2022-blake3-aes-128-gcm}"
         echo "HY2_PORT=${HY2_PORT:-}"
@@ -119,6 +121,12 @@ write_cache() {
         echo "REALITY_SID=${REALITY_SID:-}"
         echo "VMESS_PORT=${VMESS_PORT:-}"
         echo "VMESS_UUID=${VMESS_UUID:-}"
+        echo "TROJAN_PORT=${TROJAN_PORT:-}"
+        echo "TROJAN_PASSWORD=${TROJAN_PASSWORD:-}"
+        echo "TROJAN_SNI=${TROJAN_SNI:-www.bing.com}"
+        echo "ANYTLS_PORT=${ANYTLS_PORT:-}"
+        echo "ANYTLS_PASSWORD=${ANYTLS_PASSWORD:-}"
+        echo "ANYTLS_SNI=${ANYTLS_SNI:-www.bing.com}"
     } > "$SB_CACHE_FILE"
 }
 
@@ -131,6 +139,8 @@ ENABLE_HY2=${ENABLE_HY2:-false}
 ENABLE_TUIC=${ENABLE_TUIC:-false}
 ENABLE_REALITY=${ENABLE_REALITY:-false}
 ENABLE_VMESS=${ENABLE_VMESS:-false}
+ENABLE_TROJAN=${ENABLE_TROJAN:-false}
+ENABLE_ANYTLS=${ENABLE_ANYTLS:-false}
 EOF
 }
 
@@ -171,8 +181,15 @@ load_from_config() {
     REALITY_SNI=$(jq -r '.inbounds[] | select(.type=="vless") | .tls.server_name // empty' "$SB_CONFIG_FILE" | head -n1)
     VMESS_PORT=$(jq -r '.inbounds[] | select(.type=="vmess") | .listen_port // empty' "$SB_CONFIG_FILE" | head -n1)
     VMESS_UUID=$(jq -r '.inbounds[] | select(.type=="vmess") | .users[0].uuid // empty' "$SB_CONFIG_FILE" | head -n1)
+    TROJAN_PORT=$(jq -r '.inbounds[] | select(.type=="trojan") | .listen_port // empty' "$SB_CONFIG_FILE" | head -n1)
+    TROJAN_PASSWORD=$(jq -r '.inbounds[] | select(.type=="trojan") | .users[0].password // empty' "$SB_CONFIG_FILE" | head -n1)
+    TROJAN_SNI=$(jq -r '.inbounds[] | select(.type=="trojan") | .tls.server_name // empty' "$SB_CONFIG_FILE" | head -n1)
+    ANYTLS_PORT=$(jq -r '.inbounds[] | select(.type=="anytls") | .listen_port // empty' "$SB_CONFIG_FILE" | head -n1)
+    ANYTLS_PASSWORD=$(jq -r '.inbounds[] | select(.type=="anytls") | .users[0].password // empty' "$SB_CONFIG_FILE" | head -n1)
+    ANYTLS_SNI=$(jq -r '.inbounds[] | select(.type=="anytls") | .tls.server_name // empty' "$SB_CONFIG_FILE" | head -n1)
     export SS_PORT SS_PSK SS_METHOD HY2_PORT HY2_PSK HY2_SNI TUIC_PORT TUIC_UUID TUIC_PSK TUIC_SNI
     export REALITY_PORT REALITY_UUID REALITY_PK REALITY_SID REALITY_SNI VMESS_PORT VMESS_UUID
+    export TROJAN_PORT TROJAN_PASSWORD TROJAN_SNI ANYTLS_PORT ANYTLS_PASSWORD ANYTLS_SNI
 }
 
 # ---------- SNI / 伪装域名选择 ----------
@@ -252,5 +269,7 @@ generate_uris() {
     [ "${ENABLE_TUIC:-false}" = "true" ] && gen_tuic_uri
     [ "${ENABLE_REALITY:-false}" = "true" ] && gen_reality_uri
     [ "${ENABLE_VMESS:-false}" = "true" ] && gen_vmess_uri
+    [ "${ENABLE_TROJAN:-false}" = "true" ] && gen_trojan_uri
+    [ "${ENABLE_ANYTLS:-false}" = "true" ] && gen_anytls_uri
     echo "================================="
 }

@@ -12,7 +12,7 @@ DEPLOY_DIR="/etc/sing-box/deploy"
 . "$DEPLOY_DIR/core/install.sh"
 . "$DEPLOY_DIR/core/service.sh"
 . "$DEPLOY_DIR/core/config.sh"
-for proto in ss hy2 tuic vless-reality vmess; do
+for proto in ss hy2 tuic vless-reality vmess trojan anytls; do
     . "$DEPLOY_DIR/protocols/$proto.sh"
 done
 
@@ -53,6 +53,8 @@ MENU
     [ "${ENABLE_TUIC:-false}" = "true" ] && { echo "$option) 重置 TUIC 端口"; MENU_MAP[$option]="reset_tuic"; option=$((option+1)); }
     [ "${ENABLE_REALITY:-false}" = "true" ] && { echo "$option) 重置 Reality 端口"; MENU_MAP[$option]="reset_reality"; option=$((option+1)); }
     [ "${ENABLE_VMESS:-false}" = "true" ] && { echo "$option) 重置 VMess 端口"; MENU_MAP[$option]="reset_vmess"; option=$((option+1)); }
+    [ "${ENABLE_TROJAN:-false}" = "true" ] && { echo "$option) 重置 Trojan 端口"; MENU_MAP[$option]="reset_trojan"; option=$((option+1)); }
+    [ "${ENABLE_ANYTLS:-false}" = "true" ] && { echo "$option) 重置 AnyTLS 端口"; MENU_MAP[$option]="reset_anytls"; option=$((option+1)); }
     MENU_MAP[option]="start";     echo "$option) 启动服务"; option=$((option+1))
     MENU_MAP[option]="stop";      echo "$option) 停止服务"; option=$((option+1))
     MENU_MAP[option]="restart";   echo "$option) 重启服务"; option=$((option+1))
@@ -63,6 +65,8 @@ MENU
     MENU_MAP[option]="add_tuic";    echo "$option) 新增 TUIC 节点"; option=$((option+1))
     MENU_MAP[option]="add_reality"; echo "$option) 新增 VLESS Reality 节点"; option=$((option+1))
     MENU_MAP[option]="add_vmess";   echo "$option) 新增 VMess 节点"; option=$((option+1))
+    MENU_MAP[option]="add_trojan";  echo "$option) 新增 Trojan 节点"; option=$((option+1))
+    MENU_MAP[option]="add_anytls"; echo "$option) 新增 AnyTLS 节点"; option=$((option+1))
     MENU_MAP[option]="uninstall"; echo "$option) 卸载 sing-box"
     echo "0) 退出"
     echo "=========================="
@@ -85,6 +89,8 @@ while true; do
         reset_tuic) reset_tuic_port ;;
         reset_reality) reset_reality_port ;;
         reset_vmess) reset_vmess_port ;;
+        reset_trojan) reset_trojan_port ;;
+        reset_anytls) reset_anytls_port ;;
         start) service_start && ok "已启动" ;;
         stop) service_stop && ok "已停止" ;;
         restart) service_restart && ok "已重启" ;;
@@ -95,6 +101,8 @@ while true; do
         add_tuic) add_tuic_node ;;
         add_reality) add_reality_node ;;
         add_vmess) add_vmess_node ;;
+        add_trojan) add_trojan_node ;;
+        add_anytls) add_anytls_node ;;
         uninstall) uninstall_singbox; exit 0 ;;
         *) warn "无效选项: $opt" ;;
     esac

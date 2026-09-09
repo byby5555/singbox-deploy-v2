@@ -3,10 +3,10 @@ AIGC:
   ContentProducer: '001191110102MAD55U9H0F10002'
   ContentPropagator: '001191110102MAD55U9H0F10002'
   Label: '1'
-  ProduceID: '9ba2d4be-4640-483b-b6cf-12a621a71c66'
-  PropagateID: '9ba2d4be-4640-483b-b6cf-12a621a71c66'
-  ReservedCode1: '74e2cc67-62e3-456a-8c88-a5c30d4241c9'
-  ReservedCode2: '74e2cc67-62e3-456a-8c88-a5c30d4241c9'
+  ProduceID: 'e8543f38-2e21-4111-b170-0d621e0a1f98'
+  PropagateID: 'e8543f38-2e21-4111-b170-0d621e0a1f98'
+  ReservedCode1: '65121039-5134-45ed-9866-975498fb1153'
+  ReservedCode2: '65121039-5134-45ed-9866-975498fb1153'
 ---
 
 # 架构说明
@@ -32,6 +32,8 @@ singbox-deploy-v2 采用模块化设计，将原有单文件脚本拆分为**核
 | `protocols/tuic.sh` | TUIC | `tuic_build_inbound`、`gen_tuic_uri`、`reset_tuic_port` |
 | `protocols/vless-reality.sh` | VLESS Reality | `reality_build_inbound`、`gen_reality_uri`、`reset_reality_port` |
 | `protocols/vmess.sh` | VMess | `vmess_build_inbound`、`gen_vmess_uri`、`reset_vmess_port`、`add_vmess_node` |
+| `protocols/trojan.sh` | Trojan | `trojan_build_inbound`、`gen_trojan_uri`、`reset_trojan_port`、`add_trojan_node` |
+| `protocols/anytls.sh` | AnyTLS (1.12+) | `anytls_build_inbound`、`gen_anytls_uri`、`reset_anytls_port`、`add_anytls_node` |
 
 ## 新增协议三步走
 
@@ -61,5 +63,7 @@ install.sh
 - 兼容原 singbox-deploy 的配置缓存格式（`.config_cache`、`.protocols`）
 - 支持远程管道一键安装：`bash -c "$(curl -fsSL ...)"`
 - 支持 Alpine / Debian / Ubuntu / CentOS / RHEL / Fedora
+- 支持协议：SS / HY2 / TUIC / VLESS Reality / VMess / Trojan / AnyTLS（共 7 种）
+- GitHub Actions 自动 shellcheck 语法检查
 
 > AI生成

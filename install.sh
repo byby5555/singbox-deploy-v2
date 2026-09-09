@@ -18,7 +18,7 @@ if [ ! -f "$SCRIPT_DIR/core/common.sh" ]; then
     for mod in common install service config; do
         curl -fsSL -o "$SCRIPT_DIR/core/$mod.sh" "$REPO_BASE/core/$mod.sh" || { err "下载 core/$mod.sh 失败"; exit 1; }
     done
-    for proto in ss hy2 tuic vless-reality vmess; do
+    for proto in ss hy2 tuic vless-reality vmess trojan anytls; do
         curl -fsSL -o "$SCRIPT_DIR/protocols/$proto.sh" "$REPO_BASE/protocols/$proto.sh" || { err "下载 protocols/$proto.sh 失败"; exit 1; }
     done
     curl -fsSL -o "$SCRIPT_DIR/menu/sb-menu.sh" "$REPO_BASE/menu/sb-menu.sh" || { err "下载 menu/sb-menu.sh 失败"; exit 1; }
@@ -28,7 +28,7 @@ fi
 for mod in common install service config; do
     . "$SCRIPT_DIR/core/$mod.sh"
 done
-for proto in ss hy2 tuic vless-reality vmess; do
+for proto in ss hy2 tuic vless-reality vmess trojan anytls; do
     . "$SCRIPT_DIR/protocols/$proto.sh"
 done
 
@@ -55,11 +55,13 @@ echo "2) Hysteria2 (HY2)"
 echo "3) TUIC"
 echo "4) VLESS Reality"
 echo "5) VMess (TCP)"
+echo "6) Trojan"
+echo "7) AnyTLS (需 sing-box 1.12+)"
 echo ""
 echo -n "请输入协议编号(多个用空格分隔, 如: 1 2 4): "
 read -r protocol_input
 
-ENABLE_SS=false; ENABLE_HY2=false; ENABLE_TUIC=false; ENABLE_REALITY=false; ENABLE_VMESS=false
+ENABLE_SS=false; ENABLE_HY2=false; ENABLE_TUIC=false; ENABLE_REALITY=false; ENABLE_VMESS=false; ENABLE_TROJAN=false; ENABLE_ANYTLS=false
 for num in $protocol_input; do
     case "$num" in
         1) ENABLE_SS=true ;;
@@ -67,10 +69,12 @@ for num in $protocol_input; do
         3) ENABLE_TUIC=true ;;
         4) ENABLE_REALITY=true ;;
         5) ENABLE_VMESS=true ;;
+        6) ENABLE_TROJAN=true ;;
+        7) ENABLE_ANYTLS=true ;;
         *) warn "无效选项: $num" ;;
     esac
 done
-if ! $ENABLE_SS && ! $ENABLE_HY2 && ! $ENABLE_TUIC && ! $ENABLE_REALITY && ! $ENABLE_VMESS; then
+if ! $ENABLE_SS && ! $ENABLE_HY2 && ! $ENABLE_TUIC && ! $ENABLE_REALITY && ! $ENABLE_VMESS && ! $ENABLE_TROJAN && ! $ENABLE_ANYTLS; then
     err "未选择任何协议，退出"
     exit 1
 fi
@@ -80,6 +84,8 @@ $ENABLE_HY2 && echo "  - Hysteria2"
 $ENABLE_TUIC && echo "  - TUIC"
 $ENABLE_REALITY && echo "  - VLESS Reality"
 $ENABLE_VMESS && echo "  - VMess (TCP)"
+$ENABLE_TROJAN && echo "  - Trojan"
+$ENABLE_ANYTLS && echo "  - AnyTLS"
 
 save_protocols
 
@@ -108,6 +114,16 @@ if $ENABLE_TUIC; then
     TUIC_SNI=$(select_sni "hy2_tuic")
 fi
 
+if $ENABLE_TROJAN; then
+    info "Trojan SNI 选择:"
+    TROJAN_SNI=$(select_sni "hy2_tuic")
+fi
+
+if $ENABLE_ANYTLS; then
+    info "AnyTLS SNI 选择:"
+    ANYTLS_SNI=$(select_sni "hy2_tuic")
+fi
+
 write_cache
 
 # ---------- 安装依赖与 sing-box ----------
@@ -124,6 +140,8 @@ $ENABLE_HY2 && hy2_build_inbound
 $ENABLE_TUIC && tuic_build_inbound
 $ENABLE_REALITY && reality_build_inbound
 $ENABLE_VMESS && vmess_build_inbound
+$ENABLE_TROJAN && trojan_build_inbound
+$ENABLE_ANYTLS && anytls_build_inbound
 build_full_config || exit 1
 write_cache
 
@@ -147,6 +165,8 @@ install_sb_menu() {
     cp -f "$SCRIPT_DIR/protocols/tuic.sh" "$deploy_dir/protocols/"
     cp -f "$SCRIPT_DIR/protocols/vless-reality.sh" "$deploy_dir/protocols/"
     cp -f "$SCRIPT_DIR/protocols/vmess.sh" "$deploy_dir/protocols/"
+    cp -f "$SCRIPT_DIR/protocols/trojan.sh" "$deploy_dir/protocols/"
+    cp -f "$SCRIPT_DIR/protocols/anytls.sh" "$deploy_dir/protocols/"
     cp -f "$SCRIPT_DIR/menu/sb-menu.sh" "$deploy_dir/sb-menu.sh"
     chmod +x "$deploy_dir/sb-menu.sh"
     cat > /usr/local/bin/sb <<'SB_EOF'
@@ -173,6 +193,8 @@ while true; do
     echo "3) TUIC"
     echo "4) VLESS Reality"
     echo "5) VMess (TCP)"
+    echo "6) Trojan"
+    echo "7) AnyTLS"
     echo -n "请输入编号: "
     read -r add_choice
     case "$add_choice" in
@@ -181,6 +203,8 @@ while true; do
         3) add_tuic_node ;;
         4) add_reality_node ;;
         5) add_vmess_node ;;
+        6) add_trojan_node ;;
+        7) add_anytls_node ;;
         *) warn "无效选项: $add_choice" ;;
     esac
 done

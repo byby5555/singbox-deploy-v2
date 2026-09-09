@@ -3,10 +3,10 @@ AIGC:
   ContentProducer: '001191110102MAD55U9H0F10002'
   ContentPropagator: '001191110102MAD55U9H0F10002'
   Label: '1'
-  ProduceID: '12a7c96d-5606-4ef6-a4a1-d87074581405'
-  PropagateID: '12a7c96d-5606-4ef6-a4a1-d87074581405'
-  ReservedCode1: 'e814a54a-e5e8-4b57-957b-cc3d21075a98'
-  ReservedCode2: 'e814a54a-e5e8-4b57-957b-cc3d21075a98'
+  ProduceID: 'ef5c773b-9519-4e9d-bef5-8368c639ff19'
+  PropagateID: 'ef5c773b-9519-4e9d-bef5-8368c639ff19'
+  ReservedCode1: '30236696-e85b-48b7-99f6-6d8a188a4c41'
+  ReservedCode2: '30236696-e85b-48b7-99f6-6d8a188a4c41'
 ---
 
 # Sing-box 模块化一键部署脚本 v2
@@ -18,7 +18,7 @@ AIGC:
 ## ✨ 特性
 
 - **模块化架构**：核心库、服务管理、协议模块分离，新增协议只需添加一个模块文件
-- **多协议支持**：SS / Hysteria2 / TUIC / VLESS Reality / VMess 可自由组合部署
+- **多协议支持**：SS / Hysteria2 / TUIC / VLESS Reality / VMess / Trojan / AnyTLS 可自由组合部署（共 7 种）
 - **多系统支持**：Alpine / Debian / Ubuntu / CentOS / RHEL / Fedora
 - **开机自启**：自动配置 systemd / OpenRC，崩溃自动拉起
 - **管理面板**：安装后输入 `sb` 进入交互式管理菜单
@@ -47,7 +47,9 @@ singbox-deploy-v2/
 │   ├── hy2.sh              # Hysteria2
 │   ├── tuic.sh             # TUIC
 │   ├── vless-reality.sh    # VLESS + Reality
-│   └── vmess.sh            # VMess (TCP+AEAD)
+│   ├── vmess.sh            # VMess (TCP+AEAD)
+│   ├── trojan.sh           # Trojan
+│   └── anytls.sh           # AnyTLS (sing-box 1.12+)
 ├── menu/
 │   └── sb-menu.sh          # sb 管理面板
 └── docs/                   # 文档
@@ -64,7 +66,7 @@ singbox-deploy-v2/
 | 重置 XX 端口 | 动态显示已启用协议的重置端口选项 |
 | 启动/停止/重启/状态 | 服务管理 |
 | 更新 sing-box | 在线升级到官方最新版 |
-| 新增 SS / VMess 节点 | 动态添加节点 |
+| 新增节点 | 动态添加任意协议节点 |
 | 卸载 | 卸载 sing-box（保留配置） |
 
 ## 📄 支持的协议
@@ -76,6 +78,8 @@ singbox-deploy-v2/
 | TUIC | QUIC 加速 |
 | VLESS Reality | 抗封锁 TLS |
 | VMess | TCP + AEAD |
+| Trojan | TLS 伪装代理 |
+| AnyTLS | 新一代 TLS 代理（需 sing-box 1.12+） |
 
 ## 🔧 环境变量
 
