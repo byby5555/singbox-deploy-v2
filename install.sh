@@ -7,21 +7,27 @@
 set -euo pipefail
 
 # ---------- 定位脚本目录（支持远程管道执行） ----------
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# bash -c "..." 管道模式下 BASH_SOURCE 为空，无法 cd 取路径
+SCRIPT_DIR=""
+if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
 REPO_BASE="https://raw.githubusercontent.com/byby5555/singbox-deploy-v2/main"
 
-# 若通过管道执行（bash <(curl ...)），SCRIPT_DIR 指向 /dev/fd，模块文件不存在 → 下载到临时目录
-if [ ! -f "$SCRIPT_DIR/core/common.sh" ]; then
+# 若通过管道执行（bash -c "$(curl ...)"），SCRIPT_DIR 为空或模块文件不存在 → 下载到临时目录
+if [ -z "$SCRIPT_DIR" ] || [ ! -f "$SCRIPT_DIR/core/common.sh" ]; then
     SCRIPT_DIR="/tmp/singbox-deploy-v2"
     mkdir -p "$SCRIPT_DIR/core" "$SCRIPT_DIR/protocols" "$SCRIPT_DIR/menu"
-    info "下载模块文件到 $SCRIPT_DIR ..."
+    echo "[INFO] 下载模块文件到 $SCRIPT_DIR ..."
     for mod in common install service config; do
-        curl -fsSL -o "$SCRIPT_DIR/core/$mod.sh" "$REPO_BASE/core/$mod.sh" || { err "下载 core/$mod.sh 失败"; exit 1; }
+        curl -fsSL -o "$SCRIPT_DIR/core/$mod.sh" "$REPO_BASE/core/$mod.sh" || { echo "[ERR] 下载 core/$mod.sh 失败" >&2; exit 1; }
     done
     for proto in ss hy2 tuic vless-reality vmess trojan anytls; do
-        curl -fsSL -o "$SCRIPT_DIR/protocols/$proto.sh" "$REPO_BASE/protocols/$proto.sh" || { err "下载 protocols/$proto.sh 失败"; exit 1; }
+        curl -fsSL -o "$SCRIPT_DIR/protocols/$proto.sh" "$REPO_BASE/protocols/$proto.sh" || { echo "[ERR] 下载 protocols/$proto.sh 失败" >&2; exit 1; }
     done
-    curl -fsSL -o "$SCRIPT_DIR/menu/sb-menu.sh" "$REPO_BASE/menu/sb-menu.sh" || { err "下载 menu/sb-menu.sh 失败"; exit 1; }
+    curl -fsSL -o "$SCRIPT_DIR/menu/sb-menu.sh" "$REPO_BASE/menu/sb-menu.sh" || { echo "[ERR] 下载 menu/sb-menu.sh 失败" >&2; exit 1; }
+    echo "[OK] 模块下载完成"
 fi
 
 # ---------- source 全部模块 ----------
