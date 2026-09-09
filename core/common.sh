@@ -60,9 +60,13 @@ rand_pass() {
 }
 
 gen_uuid() {
-    cat /proc/sys/kernel/random/uuid 2>/dev/null || \
-        command -v uuidgen >/dev/null 2>&1 && uuidgen || \
+    if [ -f /proc/sys/kernel/random/uuid ]; then
+        head -n1 /proc/sys/kernel/random/uuid
+    elif command -v uuidgen >/dev/null 2>&1; then
+        uuidgen
+    else
         echo "00000000-0000-0000-0000-000000000000"
+    fi
 }
 
 # ---------- 公网 IP ----------
