@@ -33,11 +33,11 @@ JSON
 # 生成 VLESS Reality 入站配置段
 reality_build_inbound() {
     if [ "${ENABLE_REALITY:-false}" = "true" ]; then
-        [ -z "$REALITY_PORT" ] && REALITY_PORT=$(rand_port)
-        [ -z "$REALITY_UUID" ] && REALITY_UUID=$(gen_uuid)
-        [ -z "$REALITY_PK" ] || [ -z "$REALITY_PUB" ] && generate_reality_keys
-        [ -z "$REALITY_SID" ] && REALITY_SID=$(openssl rand -hex 4 2>/dev/null || echo "123456")
-        [ -z "$REALITY_SNI" ] && REALITY_SNI="addons.mozilla.org"
+        [ -z "${REALITY_PORT:-}" ] && REALITY_PORT=$(rand_port)
+        [ -z "${REALITY_UUID:-}" ] && REALITY_UUID=$(gen_uuid)
+        [ -z "${REALITY_PK:-}" ] || [ -z "${REALITY_PUB:-}" ] && generate_reality_keys
+        [ -z "${REALITY_SID:-}" ] && REALITY_SID=$(openssl rand -hex 4 2>/dev/null || echo "123456")
+        [ -z "${REALITY_SNI:-}" ] && REALITY_SNI="addons.mozilla.org"
         REALITY_TAG="vless-reality-in"
         export REALITY_PORT REALITY_UUID REALITY_PK REALITY_PUB REALITY_SID REALITY_SNI REALITY_TAG
         build_config_append_inbound "$(reality_inbound_json "$REALITY_PORT" "$REALITY_UUID" "$REALITY_PK" "$REALITY_SID" "$REALITY_SNI" "$REALITY_TAG")"

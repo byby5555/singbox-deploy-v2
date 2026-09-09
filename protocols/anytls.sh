@@ -30,9 +30,9 @@ JSON
 # 生成 AnyTLS 入站配置段
 anytls_build_inbound() {
     if [ "${ENABLE_ANYTLS:-false}" = "true" ]; then
-        [ -z "$ANYTLS_PORT" ] && ANYTLS_PORT=$(rand_port)
-        [ -z "$ANYTLS_PASSWORD" ] && ANYTLS_PASSWORD=$(rand_pass)
-        [ -z "$ANYTLS_SNI" ] && ANYTLS_SNI="www.bing.com"
+        [ -z "${ANYTLS_PORT:-}" ] && ANYTLS_PORT=$(rand_port)
+        [ -z "${ANYTLS_PASSWORD:-}" ] && ANYTLS_PASSWORD=$(rand_pass)
+        [ -z "${ANYTLS_SNI:-}" ] && ANYTLS_SNI="www.bing.com"
         ANYTLS_TAG="anytls-in"
         export ANYTLS_PORT ANYTLS_PASSWORD ANYTLS_SNI ANYTLS_TAG
         build_config_append_inbound "$(anytls_inbound_json "$ANYTLS_PORT" "$ANYTLS_PASSWORD" "$ANYTLS_TAG" "$ANYTLS_SNI")"

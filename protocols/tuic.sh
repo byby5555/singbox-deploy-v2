@@ -30,10 +30,10 @@ JSON
 # 生成 TUIC 入站配置段
 tuic_build_inbound() {
     if [ "${ENABLE_TUIC:-false}" = "true" ]; then
-        [ -z "$TUIC_PORT" ] && TUIC_PORT=$(rand_port)
-        [ -z "$TUIC_UUID" ] && TUIC_UUID=$(gen_uuid)
-        [ -z "$TUIC_PSK" ] && TUIC_PSK=$(rand_pass)
-        [ -z "$TUIC_SNI" ] && TUIC_SNI="www.bing.com"
+        [ -z "${TUIC_PORT:-}" ] && TUIC_PORT=$(rand_port)
+        [ -z "${TUIC_UUID:-}" ] && TUIC_UUID=$(gen_uuid)
+        [ -z "${TUIC_PSK:-}" ] && TUIC_PSK=$(rand_pass)
+        [ -z "${TUIC_SNI:-}" ] && TUIC_SNI="www.bing.com"
         TUIC_TAG="tuic-in"
         export TUIC_PORT TUIC_UUID TUIC_PSK TUIC_SNI TUIC_TAG
         build_config_append_inbound "$(tuic_inbound_json "$TUIC_PORT" "$TUIC_UUID" "$TUIC_PSK" "$TUIC_TAG" "$TUIC_SNI")"

@@ -27,9 +27,9 @@ JSON
 # 生成 HY2 入站配置段
 hy2_build_inbound() {
     if [ "${ENABLE_HY2:-false}" = "true" ]; then
-        [ -z "$HY2_PORT" ] && HY2_PORT=$(rand_port)
-        [ -z "$HY2_PSK" ] && HY2_PSK=$(rand_pass)
-        [ -z "$HY2_SNI" ] && HY2_SNI="www.bing.com"
+        [ -z "${HY2_PORT:-}" ] && HY2_PORT=$(rand_port)
+        [ -z "${HY2_PSK:-}" ] && HY2_PSK=$(rand_pass)
+        [ -z "${HY2_SNI:-}" ] && HY2_SNI="www.bing.com"
         HY2_TAG="hy2-in"
         export HY2_PORT HY2_PSK HY2_SNI HY2_TAG
         build_config_append_inbound "$(hy2_inbound_json "$HY2_PORT" "$HY2_PSK" "$HY2_TAG" "$HY2_SNI")"

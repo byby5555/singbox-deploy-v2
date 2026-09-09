@@ -23,8 +23,8 @@ JSON
 # 生成 VMess 入站配置段
 vmess_build_inbound() {
     if [ "${ENABLE_VMESS:-false}" = "true" ]; then
-        [ -z "$VMESS_PORT" ] && VMESS_PORT=$(rand_port)
-        [ -z "$VMESS_UUID" ] && VMESS_UUID=$(gen_uuid)
+        [ -z "${VMESS_PORT:-}" ] && VMESS_PORT=$(rand_port)
+        [ -z "${VMESS_UUID:-}" ] && VMESS_UUID=$(gen_uuid)
         VMESS_TAG="vmess-in"
         export VMESS_PORT VMESS_UUID VMESS_TAG
         build_config_append_inbound "$(vmess_inbound_json "$VMESS_PORT" "$VMESS_UUID" "$VMESS_TAG")"

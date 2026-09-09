@@ -22,9 +22,9 @@ JSON
 # 生成 SS 入站配置段（供 create_config 调用）
 ss_build_inbound() {
     if [ "${ENABLE_SS:-false}" = "true" ]; then
-        [ -z "$SS_PORT" ] && SS_PORT=$(rand_port)
-        [ -z "$SS_PSK" ] && SS_PSK=$(rand_pass)
-        [ -z "$SS_METHOD" ] && SS_METHOD="2022-blake3-aes-128-gcm"
+        [ -z "${SS_PORT:-}" ] && SS_PORT=$(rand_port)
+        [ -z "${SS_PSK:-}" ] && SS_PSK=$(rand_pass)
+        [ -z "${SS_METHOD:-}" ] && SS_METHOD="2022-blake3-aes-128-gcm"
         SS_TAG="ss-in"
         export SS_PORT SS_PSK SS_METHOD SS_TAG
         build_config_append_inbound "$(ss_inbound_json "$SS_PORT" "$SS_METHOD" "$SS_PSK" "$SS_TAG")"

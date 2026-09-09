@@ -29,9 +29,9 @@ JSON
 # 生成 Trojan 入站配置段
 trojan_build_inbound() {
     if [ "${ENABLE_TROJAN:-false}" = "true" ]; then
-        [ -z "$TROJAN_PORT" ] && TROJAN_PORT=$(rand_port)
-        [ -z "$TROJAN_PASSWORD" ] && TROJAN_PASSWORD=$(rand_pass)
-        [ -z "$TROJAN_SNI" ] && TROJAN_SNI="www.bing.com"
+        [ -z "${TROJAN_PORT:-}" ] && TROJAN_PORT=$(rand_port)
+        [ -z "${TROJAN_PASSWORD:-}" ] && TROJAN_PASSWORD=$(rand_pass)
+        [ -z "${TROJAN_SNI:-}" ] && TROJAN_SNI="www.bing.com"
         TROJAN_TAG="trojan-in"
         export TROJAN_PORT TROJAN_PASSWORD TROJAN_SNI TROJAN_TAG
         build_config_append_inbound "$(trojan_inbound_json "$TROJAN_PORT" "$TROJAN_PASSWORD" "$TROJAN_TAG" "$TROJAN_SNI")"
