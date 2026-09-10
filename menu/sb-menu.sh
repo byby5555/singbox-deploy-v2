@@ -67,7 +67,7 @@ MENU
     MENU_MAP[option]="add_vmess";   echo "$option) 新增 VMess 节点"; option=$((option+1))
     MENU_MAP[option]="add_trojan";  echo "$option) 新增 Trojan 节点"; option=$((option+1))
     MENU_MAP[option]="add_anytls"; echo "$option) 新增 AnyTLS 节点"; option=$((option+1))
-    MENU_MAP[option]="uninstall"; echo "$option) 卸载 sing-box"
+    MENU_MAP[option]="uninstall"; echo "$option) 卸载 sing-box-deploy"
     echo "0) 退出"
     echo "=========================="
 }
@@ -103,7 +103,7 @@ while true; do
         add_vmess) add_vmess_node ;;
         add_trojan) add_trojan_node ;;
         add_anytls) add_anytls_node ;;
-        uninstall) uninstall_singbox; exit 0 ;;
+        uninstall) uninstall_all; exit 0 ;;
         *) warn "无效选项: $opt" ;;
     esac
     echo ""
