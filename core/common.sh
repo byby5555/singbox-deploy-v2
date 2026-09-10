@@ -229,14 +229,23 @@ select_sni() {
     local options=()
 
     if [ "$mode" = "reality" ]; then
-        # Reality 需要真实服务器 IP（非 CDN），支持 TLS 1.3 + H2
+        # Reality 需要真实服务器 IP（非 CDN），支持 TLS 1.3 + H2 + X25519
+        # 避开最热门网站（apple.com/microsoft.com/google.com 等易被识别）
+        # 建议用 RealityChecker 工具验证: github.com/V2RaySSR/RealityChecker
         default_sni="addons.mozilla.org"
         options=(
-            "addons.mozilla.org|Mozilla 插件站(默认)"
+            "addons.mozilla.org|Mozilla 插件站(默认推荐)"
             "www.swift.com|SWIFT 金融官网(低调)"
-            "www.tesla.com|特斯拉官网"
             "www.lovelive-anime.jp|动漫官网(小众)"
             "dash.cloudflare.com|Cloudflare 面板"
+            "www.tesla.com|特斯拉官网"
+            "www.asus.com|华硕官网"
+            "www.acer.com|宏碁官网"
+            "www.gigabyte.com|技嘉官网"
+            "www.msi.com|微星官网"
+            "www.cpanel.com|cPanel 控制面板官网"
+            "www.joomla.org|Joomla CMS 官网"
+            "www.virustotal.com|VirusTotal 安全检测"
         )
     else
         # HY2 / TUIC 仅客户端伪装，要求低
@@ -247,6 +256,11 @@ select_sni() {
             "www.cloudflare.com|Cloudflare"
             "www.swift.com|SWIFT 金融(低调)"
             "www.tesla.com|特斯拉官网"
+            "www.google.com|谷歌搜索"
+            "www.microsoft.com|微软官网"
+            "www.amazon.com|亚马逊"
+            "www.github.com|GitHub"
+            "www.samsung.com|三星官网"
         )
     fi
 
