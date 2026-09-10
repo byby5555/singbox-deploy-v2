@@ -41,7 +41,6 @@ done
 # ---------- 预检查 ----------
 require_root
 detect_os
-check_deps
 
 info "========== Sing-box 模块化部署 v2 =========="
 info "检测到系统: $OS"
@@ -64,6 +63,7 @@ write_cache
 
 # ---------- 安装依赖与 sing-box ----------
 install_deps
+check_deps
 if ! command -v sing-box >/dev/null 2>&1; then
     install_singbox || exit 1
 fi
