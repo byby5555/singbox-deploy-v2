@@ -55,19 +55,19 @@ MENU
     [ "${ENABLE_VMESS:-false}" = "true" ] && { echo "$option) 重置 VMess 端口"; MENU_MAP[$option]="reset_vmess"; option=$((option+1)); }
     [ "${ENABLE_TROJAN:-false}" = "true" ] && { echo "$option) 重置 Trojan 端口"; MENU_MAP[$option]="reset_trojan"; option=$((option+1)); }
     [ "${ENABLE_ANYTLS:-false}" = "true" ] && { echo "$option) 重置 AnyTLS 端口"; MENU_MAP[$option]="reset_anytls"; option=$((option+1)); }
-    MENU_MAP[option]="start";     echo "$option) 启动服务"; option=$((option+1))
-    MENU_MAP[option]="stop";      echo "$option) 停止服务"; option=$((option+1))
-    MENU_MAP[option]="restart";   echo "$option) 重启服务"; option=$((option+1))
-    MENU_MAP[option]="status";    echo "$option) 查看状态"; option=$((option+1))
-    MENU_MAP[option]="update";    echo "$option) 更新 sing-box"; option=$((option+1))
-    MENU_MAP[option]="add_ss";      echo "$option) 新增 SS 节点"; option=$((option+1))
-    MENU_MAP[option]="add_hy2";     echo "$option) 新增 Hysteria2 节点"; option=$((option+1))
-    MENU_MAP[option]="add_tuic";    echo "$option) 新增 TUIC 节点"; option=$((option+1))
-    MENU_MAP[option]="add_reality"; echo "$option) 新增 VLESS Reality 节点"; option=$((option+1))
-    MENU_MAP[option]="add_vmess";   echo "$option) 新增 VMess 节点"; option=$((option+1))
-    MENU_MAP[option]="add_trojan";  echo "$option) 新增 Trojan 节点"; option=$((option+1))
-    MENU_MAP[option]="add_anytls"; echo "$option) 新增 AnyTLS 节点"; option=$((option+1))
-    MENU_MAP[option]="uninstall"; echo "$option) 卸载 sing-box-deploy"
+    MENU_MAP[$option]="start";     echo "$option) 启动服务"; option=$((option+1))
+    MENU_MAP[$option]="stop";      echo "$option) 停止服务"; option=$((option+1))
+    MENU_MAP[$option]="restart";   echo "$option) 重启服务"; option=$((option+1))
+    MENU_MAP[$option]="status";    echo "$option) 查看状态"; option=$((option+1))
+    MENU_MAP[$option]="update";    echo "$option) 更新 sing-box"; option=$((option+1))
+    MENU_MAP[$option]="add_ss";      echo "$option) 新增 SS 节点"; option=$((option+1))
+    MENU_MAP[$option]="add_hy2";     echo "$option) 新增 Hysteria2 节点"; option=$((option+1))
+    MENU_MAP[$option]="add_tuic";    echo "$option) 新增 TUIC 节点"; option=$((option+1))
+    MENU_MAP[$option]="add_reality"; echo "$option) 新增 VLESS Reality 节点"; option=$((option+1))
+    MENU_MAP[$option]="add_vmess";   echo "$option) 新增 VMess 节点"; option=$((option+1))
+    MENU_MAP[$option]="add_trojan";  echo "$option) 新增 Trojan 节点"; option=$((option+1))
+    MENU_MAP[$option]="add_anytls"; echo "$option) 新增 AnyTLS 节点"; option=$((option+1))
+    MENU_MAP[$option]="uninstall"; echo "$option) 卸载 sing-box-deploy"
     echo "0) 退出"
     echo "=========================="
 }
