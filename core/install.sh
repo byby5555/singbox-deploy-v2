@@ -9,8 +9,29 @@ install_deps() {
     info "安装系统依赖..."
     case "$OS" in
         alpine)  apk update && apk add --no-cache bash curl jq openssl ca-certificates ;;
-        debian)  apt-get update -y && apt-get install -y curl jq openssl ca-certificates ;;
-        redhat)  yum install -y curl jq openssl ca-certificates ;;
+        debian)
+            # 先安装 ca-certificates（apt HTTPS 源需要它），再装其他依赖
+            # 若 ca-certificates 缺失且源为 HTTPS，临时切 HTTP 安装
+            if ! dpkg -s ca-certificates >/dev/null 2>&1; then
+                info "ca-certificates 缺失，尝试安装..."
+                # 临时将 https:// 源改为 http://
+                sed -i 's/https:\/\//http:\/\//g' /etc/apt/sources.list 2>/dev/null || true
+                sed -i 's/https:\/\//http:\/\//g' /etc/apt/sources.list.d/*.list 2>/dev/null || true
+                apt-get update -y 2>/dev/null || true
+                apt-get install -y ca-certificates 2>/dev/null || true
+                # 恢复 https://
+                sed -i 's/http:\/\//https:\/\//g' /etc/apt/sources.list 2>/dev/null || true
+                sed -i 's/http:\/\//https:\/\//g' /etc/apt/sources.list.d/*.list 2>/dev/null || true
+            fi
+            apt-get update -y && apt-get install -y curl jq openssl ca-certificates
+            ;;
+        redhat)
+            # 同样先确保 ca-certificates
+            if ! rpm -q ca-certificates >/dev/null 2>&1; then
+                yum install -y ca-certificates 2>/dev/null || true
+            fi
+            yum install -y curl jq openssl ca-certificates
+            ;;
         *)       err "不支持的系统: $OS" && exit 1 ;;
     esac
 }
@@ -61,10 +82,11 @@ update_singbox() {
     service_restart
 }
 
-# 卸载 sing-box（完全清除：二进制 + 服务 + 配置 + 证书 + 管理脚本）
-uninstall_singbox() {
+# 卸载 sing-box-deploy 全部组件（二进制 + 服务 + 配置 + 证书 + 管理脚本）
+# 注意：不卸载系统依赖包（curl/jq/openssl/ca-certificates），它们是系统常用工具
+uninstall_all() {
     echo ""
-    info "========== 完全卸载 sing-box =========="
+    info "========== 卸载 sing-box-deploy 全部组件 =========="
     echo "将删除以下内容："
     echo "  - sing-box 二进制及系统包"
     echo "  - systemd/OpenRC 服务"
@@ -72,6 +94,7 @@ uninstall_singbox() {
     echo "  - /usr/local/bin/sb 管理命令"
     echo "  - /tmp/singbox-deploy-v2/ 临时文件"
     echo "  - sing-box_*_linux_*.deb 下载的安装包"
+    echo "  （保留系统依赖: curl jq openssl ca-certificates）"
     echo ""
     read -p "确认完全卸载? 此操作不可恢复 (y/N): " confirm
     [[ ! "$confirm" =~ ^[Yy]$ ]] && info "已取消" && return 0
@@ -136,7 +159,7 @@ uninstall_singbox() {
     fi
 
     if [ "$remain" -eq 0 ]; then
-        ok "sing-box 已完全卸载，无残留"
+        ok "sing-box-deploy 已完全卸载，无残留"
     else
         warn "部分残留未能自动清除，请手动检查上述路径"
     fi
