@@ -137,8 +137,10 @@ while true; do
     echo "5) VMess (TCP)"
     echo "6) Trojan"
     echo "7) AnyTLS"
+    echo "0) 不新增，退出"
     echo -n "请输入编号: "
     read -r add_choice
+    [ "$add_choice" = "0" ] && break
     case "$add_choice" in
         1) add_ss_node ;;
         2) add_hy2_node ;;
