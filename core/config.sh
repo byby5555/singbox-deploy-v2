@@ -67,3 +67,66 @@ edit_config() {
         return 1
     fi
 }
+
+# 导出配置（含 Reality 私钥等敏感信息，提示妥善保管）
+export_config() {
+    [ -f "$SB_CONFIG_FILE" ] || { err "配置文件不存在，请先安装"; return 1; }
+    local path
+    read -p "请输入导出路径(留空默认 ~/sing-box-config-日期.json): " path
+    path="$(echo "$path" | tr -d '[:space:]')"
+    [ -z "$path" ] && path="$HOME/sing-box-config-$(date +%Y%m%d-%H%M%S).json"
+    if cp -f "$SB_CONFIG_FILE" "$path"; then
+        ok "配置已导出: $path"
+        info "提示: 文件包含 Reality 私钥等敏感信息，请妥善保管"
+    else
+        err "导出失败: $path"
+        return 1
+    fi
+}
+
+# 导入配置（校验 → 备份 → 应用 → 重启 → 同步状态 → 展示链接）
+import_config() {
+    local path latest_bak
+    read -p "请输入要导入的配置文件路径: " path
+    path="$(echo "$path" | tr -d '[:space:]')"
+    [ -z "$path" ] && { warn "未输入路径"; return 1; }
+    [ -f "$path" ] || { err "文件不存在: $path"; return 1; }
+    command -v sing-box >/dev/null 2>&1 || { err "sing-box 未安装"; return 1; }
+
+    # 先补生成缺失证书（HY2/TUIC/Trojan/AnyTLS 引用自签证书；必须在校验前，否则引用缺失证书的配置校验必失败）
+    if grep -q "$SB_CERT_FILE" "$path" 2>/dev/null && \
+       { [ ! -f "$SB_CERT_FILE" ] || [ ! -f "$SB_KEY_FILE" ]; }; then
+        generate_self_signed_cert
+    fi
+
+    # 再校验配置合法性
+    if ! sing-box check -c "$path" >/dev/null 2>&1; then
+        err "配置校验未通过，无法导入:"
+        sing-box check -c "$path" 2>&1 | head -n 5
+        return 1
+    fi
+
+    # 备份当前配置 → 应用新配置
+    backup_config
+    cp -f "$path" "$SB_CONFIG_FILE"
+
+    # 重启并验证；失败则回滚
+    service_restart
+    sleep 1
+    if [ "$(check_running)" != "running" ]; then
+        err "服务启动失败，回滚到原配置"
+        latest_bak=$(ls -t "$SB_CONFIG_FILE".bak.* 2>/dev/null | head -n1)
+        if [ -n "$latest_bak" ]; then
+            cp -f "$latest_bak" "$SB_CONFIG_FILE"
+            service_restart
+        fi
+        return 1
+    fi
+
+    # 从新配置同步运行状态（协议开关、端口/UUID、Reality 公钥推导）并持久化
+    load_from_config
+    save_protocols
+    write_cache
+    ok "配置已导入并重启服务"
+    generate_uris
+}

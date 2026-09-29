@@ -82,6 +82,48 @@ url_encode() {
     printf '%s' "$1" | sed 's/:/%3A/g; s/+/%2B/g; s/\//%2F/g; s/=/%3D/g'
 }
 
+# ---------- base64url / x25519 工具（供 Reality 公钥推导）----------
+# base64url 字符串 → 原始字节的 hex（失败返回空）
+_b64url_to_hex() {
+    local s="$1" mod
+    s="$(echo "$s" | tr '_-' '/+' | tr -d '[:space:]')"
+    s="${s%%=*}"
+    mod=$(( ${#s} % 4 ))
+    [ "$mod" -eq 2 ] && s="$s=="
+    [ "$mod" -eq 3 ] && s="$s="
+    echo "$s" | base64 -d 2>/dev/null | od -An -tx1 | tr -d ' \n'
+}
+
+# hex 字符串 → 二进制输出到 stdout
+_hex_to_bin() {
+    local hex="$1" i=0 out=""
+    while [ "$i" -lt "${#hex}" ]; do
+        out="$out\\x${hex:$i:2}"
+        i=$((i+2))
+    done
+    printf "$out"
+}
+
+# 从 Reality 私钥(base64url)推导公钥(base64url)
+# 原理：X25519 公钥 = scalarmult(私钥)，用 openssl 包装 PKCS#8 DER 求解
+# 失败时返回非零且不输出
+derive_reality_pub() {
+    local priv="$1" raw_hex spki_hex pub_b64
+    [ -n "$priv" ] || return 1
+    raw_hex=$(_b64url_to_hex "$priv")
+    # 私钥必须为 32 字节（64 hex 字符）
+    [ "${#raw_hex}" -eq 64 ] || return 1
+    # PKCS#8 DER 前缀: SEQUENCE{ INTEGER 0, SEQUENCE{ OID 1.3.101.110(X25519) }, OCTET STRING{ OCTET STRING rawkey } }
+    spki_hex=$(_hex_to_bin "302e020100300506032b656e04220420${raw_hex}" \
+        | openssl pkey -inform DER -pubout -outform DER 2>/dev/null \
+        | od -An -tx1 | tr -d ' \n')
+    # SPKI(X25519) DER 固定 44 字节（88 hex），公钥为末 32 字节
+    [ "${#spki_hex}" -eq 88 ] || return 1
+    pub_b64=$(_hex_to_bin "${spki_hex:24:64}" | base64 | tr -d '\n')
+    [ -n "$pub_b64" ] || return 1
+    echo "$pub_b64" | tr '+/' '-_' | tr -d '='
+}
+
 # ---------- 依赖检查 ----------
 check_deps() {
     local missing=0
@@ -215,9 +257,40 @@ load_from_config() {
     ANYTLS_PORT=$(jq -r '.inbounds[] | select(.type=="anytls") | .listen_port // empty' "$SB_CONFIG_FILE" | head -n1)
     ANYTLS_PASSWORD=$(jq -r '.inbounds[] | select(.type=="anytls") | .users[0].password // empty' "$SB_CONFIG_FILE" | head -n1)
     ANYTLS_SNI=$(jq -r '.inbounds[] | select(.type=="anytls") | .tls.server_name // empty' "$SB_CONFIG_FILE" | head -n1)
+
+    # ===== 同步协议开关：以 config.json 实际 inbound 为准（覆盖缓存旧值）=====
+    # 修复：手动替换/导入配置后，缓存中的 ENABLE_* 过期导致链接显示不全
+    ENABLE_SS=false; ENABLE_HY2=false; ENABLE_TUIC=false; ENABLE_REALITY=false
+    ENABLE_VMESS=false; ENABLE_TROJAN=false; ENABLE_ANYTLS=false
+    local _types _t
+    _types=$(jq -r '.inbounds[].type // empty' "$SB_CONFIG_FILE" 2>/dev/null || true)
+    for _t in $_types; do
+        case "$_t" in
+            shadowsocks) ENABLE_SS=true ;;
+            hysteria2)   ENABLE_HY2=true ;;
+            tuic)        ENABLE_TUIC=true ;;
+            vmess)       ENABLE_VMESS=true ;;
+            trojan)      ENABLE_TROJAN=true ;;
+            anytls)      ENABLE_ANYTLS=true ;;
+        esac
+    done
+    # vless 仅在启用 reality 时才映射为 Reality 节点
+    if jq -e '.inbounds[] | select(.type=="vless" and .tls.reality.enabled==true)' \
+        "$SB_CONFIG_FILE" >/dev/null 2>&1; then
+        ENABLE_REALITY=true
+    fi
+
+    # ===== Reality 公钥从私钥推导（修复替换配置后 pbk 过期）=====
+    if [ -n "${REALITY_PK:-}" ]; then
+        local _dpub
+        _dpub=$(derive_reality_pub "$REALITY_PK" 2>/dev/null || true)
+        [ -n "$_dpub" ] && REALITY_PUB="$_dpub"
+    fi
+
     export SS_PORT SS_PSK SS_METHOD HY2_PORT HY2_PSK HY2_SNI TUIC_PORT TUIC_UUID TUIC_PSK TUIC_SNI
-    export REALITY_PORT REALITY_UUID REALITY_PK REALITY_SID REALITY_SNI VMESS_PORT VMESS_UUID
+    export REALITY_PORT REALITY_UUID REALITY_PK REALITY_PUB REALITY_SID REALITY_SNI VMESS_PORT VMESS_UUID
     export TROJAN_PORT TROJAN_PASSWORD TROJAN_SNI ANYTLS_PORT ANYTLS_PASSWORD ANYTLS_SNI
+    export ENABLE_SS ENABLE_HY2 ENABLE_TUIC ENABLE_REALITY ENABLE_VMESS ENABLE_TROJAN ENABLE_ANYTLS
 }
 
 # ---------- SNI / 伪装域名选择 ----------

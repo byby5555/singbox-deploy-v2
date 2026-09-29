@@ -46,8 +46,10 @@ show_menu() {
  1) 查看协议链接
  2) 查看配置文件
  3) 编辑配置文件
+ 4) 导出配置
+ 5) 导入配置
 MENU
-    local option=4
+    local option=6
     [ "${ENABLE_SS:-false}" = "true" ] && { echo "$option) 重置 SS 端口"; MENU_MAP[$option]="reset_ss"; option=$((option+1)); }
     [ "${ENABLE_HY2:-false}" = "true" ] && { echo "$option) 重置 HY2 端口"; MENU_MAP[$option]="reset_hy2"; option=$((option+1)); }
     [ "${ENABLE_TUIC:-false}" = "true" ] && { echo "$option) 重置 TUIC 端口"; MENU_MAP[$option]="reset_tuic"; option=$((option+1)); }
@@ -74,6 +76,7 @@ MENU
 
 declare -A MENU_MAP=()
 MENU_MAP[1]="view_uri"; MENU_MAP[2]="view_config"; MENU_MAP[3]="edit_config"
+MENU_MAP[4]="export_config"; MENU_MAP[5]="import_config"
 
 while true; do
     show_menu
@@ -84,6 +87,8 @@ while true; do
         view_uri) generate_uris ;;
         view_config) view_config ;;
         edit_config) edit_config ;;
+        export_config) export_config ;;
+        import_config) import_config ;;
         reset_ss) reset_ss_port ;;
         reset_hy2) reset_hy2_port ;;
         reset_tuic) reset_tuic_port ;;
