@@ -122,7 +122,9 @@ check_running() {
         return 0
     fi
     # 3) ps 兜底（pgrep 不可用或进程名不匹配时）
-    if ps aux 2>/dev/null | grep -v grep | grep -q '[s]ing-box'; then
+    # 注意: 必须匹配 'sing-box run' 而非 'sing-box'，否则会误匹配
+    # sb-menu.sh 自身的 bash 进程（路径含 /etc/sing-box/）
+    if ps aux 2>/dev/null | grep -v grep | grep -q '[s]ing-box run'; then
         echo "running"
         return 0
     fi
@@ -153,8 +155,8 @@ get_pid() {
             return 0
         fi
     fi
-    # 3) ps 兜底
-    pid=$(ps aux 2>/dev/null | grep -v grep | grep '[s]ing-box' | awk '{print $2}' | head -n1)
+    # 3) ps 兜底（匹配 sing-box run，避免误匹配 sb-menu.sh 自身）
+    pid=$(ps aux 2>/dev/null | grep -v grep | grep '[s]ing-box run' | awk '{print $2}' | head -n1)
     if [ -n "$pid" ]; then
         echo "$pid"
         return 0
